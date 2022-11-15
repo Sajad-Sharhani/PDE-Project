@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.sparse.linalg import inv
 from scipy.sparse import eye, vstack
+from Problem_Solving2 import B
 import operators as ops
 import matplotlib.pyplot as plt
 
@@ -31,7 +32,7 @@ xvec = np.linspace(xl, xr, mx)
 H, HI, D1, D2, e_l, e_r, d1_l, d1_r = ops.sbp_cent_4th(mx, hx)
 
 # Construct the Boundary Operators
-L = vstack([e_l,  a*e_r + 2*b*d1_r])
+L = vstack([e_l,  e_r])
 I = eye(mx)
 
 # Construct the Projection Operator
@@ -44,48 +45,70 @@ mt = int(np.ceil(T/ht_try) + 1)  # round up so that (mt-1)*ht = T
 tvec, ht = np.linspace(0, T, mt, retstep=True)
 
 # The SBP-Projection Method
+# imaginary unit
+j = 1j
+
+# F function is alpha*exp(-(6*(x-1))^2)
+
+
+def F(v):
+    return a*np.exp(-(6*(xvec-1))**2)
 
 
 def rhs(v):
-    return (P@(a*D1 + b*D2)@P@v)
+    return (P@(j*D2 - j*F(xvec))@P@v)
 
 
-# Plot
-fig = plt.figure()
-ax = fig.add_subplot(111)
 v = f(xvec)
-[line] = ax.plot(xvec, v, label='Approximation')
-ax.set_xlim([xl, xr-hx])
-ax.set_ylim([0, 1])
-title = plt.title("t = " + "{:.2f}".format(0))
-plt.draw()
-plt.pause(1)
+B = P@D2@P@v
+# convert B to a matrix
+B = B.toarray()
+print(B.shape)
 
-# Runge-Kutta 4
-t = 0
-for tidx in range(mt-1):
-    k1 = ht*rhs(v)
-    k2 = ht*rhs(v + 0.5*k1)
-    k3 = ht*rhs(v + 0.5*k2)
-    k4 = ht*rhs(v + k3)
+fig = plt.figure(1)
+ee, vv = np.linalg.eig(hx*B)
 
-    v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4)
-    t = t + ht
+# plot all the real and imaginary parts of the eigenvalues
+plt.plot(np.real(ee), np.imag(ee), 'x')
+plt.show()
 
-    # Plot for the 0.5 second mark and save the figure
-    if tidx == 250:
-        ax.set_ylim([0, 0.35])
-        line.set_ydata(v)
-        title.set_text("t = " + "{:.2f}".format(t))
-        plt.draw()
-        plt.pause(1)
-        plt.savefig("0.5s.png")
 
-     # Plot for the 1.5 second mark and save the figure
-    if tidx == 749:
-        ax.set_ylim([0, 0.08])
-        line.set_ydata(v)
-        title.set_text("t = " + "{:.2f}".format(t))
-        plt.draw()
-        plt.pause(1)
-        plt.savefig("1.5s.png")
+# # Plot
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# v = f(xvec)
+# [line] = ax.plot(xvec, v, label='Approximation')
+# ax.set_xlim([xl, xr-hx])
+# ax.set_ylim([0, 1])
+# title = plt.title("t = " + "{:.2f}".format(0))
+# plt.draw()
+# plt.pause(1)
+
+# # Runge-Kutta 4
+# t = 0
+# for tidx in range(mt-1):
+#     k1 = ht*rhs(v)
+#     k2 = ht*rhs(v + 0.5*k1)
+#     k3 = ht*rhs(v + 0.5*k2)
+#     k4 = ht*rhs(v + k3)
+
+#     v = v + 1/6*(k1 + 2*k2 + 2*k3 + k4)
+#     t = t + ht
+
+#     # Plot for the 0.5 second mark and save the figure
+#     if tidx == 250:
+#         ax.set_ylim([0, 0.35])
+#         line.set_ydata(v)
+#         title.set_text("t = " + "{:.2f}".format(t))
+#         plt.draw()
+#         plt.pause(1)
+#         plt.savefig("0.5s.png")
+
+#      # Plot for the 1.5 second mark and save the figure
+#     if tidx == 749:
+#         ax.set_ylim([0, 0.08])
+#         line.set_ydata(v)
+#         title.set_text("t = " + "{:.2f}".format(t))
+#         plt.draw()
+#         plt.pause(1)
+#         plt.savefig("1.5s.png")

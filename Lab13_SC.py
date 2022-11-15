@@ -32,7 +32,7 @@ import time
 
 # Method parameters
 # Number of grid points, integer > 15.
-mx = 201 
+mx = 201
 
 # Order of accuracy. 2, 4, 6, 8, 10, or 12.
 order = 4
@@ -44,39 +44,45 @@ use_implicit = False
 use_AD = False
 
 # Initial data
+
+
 def f(x):
     return (np.abs(2*x - 0.3) <= 0.25)*np.exp(-200*(2*x - 0.3)**2) + 0.5
 
+
 # Model parameters
-T = 2 # end time
+T = 2  # end time
 xl = 0
 xr = 1
 
 # Space discretization
 hx = (xr - xl)/mx
-xvec = np.linspace(xl,xr-hx,mx) # periodic, u(x=0) = u(x=1)
+xvec = np.linspace(xl, xr-hx, mx)  # periodic, u(x=0) = u(x=1)
 
 if use_implicit:
-    H,Q = ops.periodic_imp(mx,hx,use_AD)
+    H, Q = ops.periodic_imp(mx, hx, use_AD)
 else:
-    H,Q = ops.periodic_expl(mx,hx,order,use_AD)
+    H, Q = ops.periodic_expl(mx, hx, order, use_AD)
 
 # Time discretization
 ht_try = 0.04*hx
-mt = int(np.ceil(T/ht_try) + 1) # round up so that (mt-1)*ht = T
-tvec,ht = np.linspace(0,T,mt,retstep=True)
+mt = int(np.ceil(T/ht_try) + 1)  # round up so that (mt-1)*ht = T
+tvec, ht = np.linspace(0, T, mt, retstep=True)
 
 LUP = spsplg.splu(H)
+
+
 def rhs(v):
     return LUP.solve(-Q@(0.5*v*v))
+
 
 # Plot
 fig = plt.figure()
 ax = fig.add_subplot(111)
 v = f(xvec)
-[line] = ax.plot(xvec,v,label='Approximation')
-ax.set_xlim([xl,xr-hx])
-ax.set_ylim([0,2])
+[line] = ax.plot(xvec, v, label='Approximation')
+ax.set_xlim([xl, xr-hx])
+ax.set_ylim([0, 2])
 title = plt.title("t = " + "{:.2f}".format(0))
 plt.draw()
 plt.pause(1)
@@ -93,7 +99,7 @@ for tidx in range(mt-1):
     t = t + ht
 
     # Update plot every 50th time step
-    if tidx % 50 == 0: 
+    if tidx % 50 == 0:
         line.set_ydata(v)
         title.set_text("t = " + "{:.2f}".format(tvec[tidx+1]))
         plt.draw()
